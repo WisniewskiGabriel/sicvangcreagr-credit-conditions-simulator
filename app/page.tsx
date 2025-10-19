@@ -301,6 +301,34 @@ ${installmentOptions.map(option => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
       <main className="mx-auto max-w-6xl space-y-6 py-8">
+        {/* Configuration Ready Warning Banner */}
+        {selectedCreditType && selectedVariant && (
+          <div 
+            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            onClick={() => {
+              document.querySelector('[data-scroll-target="credit-operation"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+          >
+            <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2">
+                <i className="pi pi-check-circle text-xl animate-pulse"></i>
+                <div>
+                  <h3 className="font-bold text-lg">
+                    ✅ Configuração Completa - Pronto para Iniciar!
+                  </h3>
+                  <p className="text-sm opacity-90">
+                    Clique aqui para prosseguir com a operação de crédito • {selectedCreditType} - {selectedVariant}
+                  </p>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 ml-auto">
+                <i className="pi pi-arrow-down animate-bounce"></i>
+                <span className="text-sm font-medium">Clique para continuar</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold text-gray-800 dark:text-white">
             Simulador de crédito agrícola
@@ -328,9 +356,12 @@ ${installmentOptions.map(option => {
                   }}
                 />
                 <Button 
-                  label="Calcular" 
+                  label="Ver condições" 
                   icon="pi pi-eye" 
                   severity="info"
+                  onClick={() => {
+                    document.querySelector('[data-scroll-target="installment-values"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
                 />
               </div>
             }
@@ -503,6 +534,7 @@ ${installmentOptions.map(option => {
           title="Valores por Parcelamento"
           className="shadow-lg"
           subTitle={`Baseado no valor de ${getInstallmentValue(1)} com ${interestRate}% ao ano`}
+          data-scroll-target="installment-values"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {installmentOptions.map((option) => {
@@ -580,7 +612,7 @@ ${installmentOptions.map(option => {
         </Card>
 
         {/* Credit Operation Action Section */}
-        <Card className="shadow-xl border-2 border-blue-200 dark:border-blue-800">
+        <Card className="shadow-xl border-2 border-blue-200 dark:border-blue-800" data-scroll-target="credit-operation">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg">
             {/* Header Section */}
             <div className="flex items-center justify-between mb-4">
