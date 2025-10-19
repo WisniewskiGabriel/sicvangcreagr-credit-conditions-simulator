@@ -609,7 +609,7 @@ ${installmentOptions.map(option => {
         <Card
           title="Valores por Parcelamento"
           className="shadow-lg"
-          subTitle={`Baseado no valor de ${getInstallmentValue(1)} com ${interestRate}% ao ano`}
+          subTitle={`Baseado no valor de ${getInstallmentValue(1)} com ${Math.round(interestRate * 100) / 100}% ao ano`}
           data-scroll-target="installment-values"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -743,7 +743,7 @@ ${installmentOptions.map(option => {
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Taxa</span>
                 </div>
                 <p className="text-lg font-bold text-gray-800 dark:text-white">
-                  {interestRate}% a.a.
+                  {Math.round(interestRate * 100) / 100}% a.a.
                 </p>
               </div>
 
@@ -885,7 +885,7 @@ ${installmentOptions.map(option => {
                 </div>
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">Taxa:</span>
-                  <span className="ml-2 font-semibold">{interestRate}% ao ano</span>
+                  <span className="ml-2 font-semibold">{Math.round(interestRate * 100) / 100}% ao ano</span>
                 </div>
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">Parcelas:</span>
