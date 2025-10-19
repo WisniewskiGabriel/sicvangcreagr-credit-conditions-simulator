@@ -315,34 +315,23 @@ ${installmentOptions.map(option => {
             title="Calculadora de Empréstimo"
             className="shadow-lg"
             footer={
-              <div className="flex justify-between items-center">
+              <div className="flex justify-end gap-2">
                 <Button
-                  label="Copiar Resumo"
-                  icon="pi pi-copy"
-                  severity="info"
+                  label="Limpar"
+                  icon="pi pi-refresh"
+                  severity="secondary"
                   outlined
-                  size="small"
-                  onClick={copyToClipboard}
-                  tooltip="Copia um resumo para enviar ao cliente"
+                  onClick={() => {
+                    setLoanAmount(10000);
+                    setInterestRate(5.5);
+                    setSelectedInstallments(12);
+                  }}
                 />
-                <div className="flex gap-2">
-                  <Button
-                    label="Limpar"
-                    icon="pi pi-refresh"
-                    severity="secondary"
-                    outlined
-                    onClick={() => {
-                      setLoanAmount(10000);
-                      setInterestRate(5.5);
-                      setSelectedInstallments(12);
-                    }}
-                  />
-                  <Button 
-                    label="Calcular" 
-                    icon="pi pi-eye" 
-                    severity="info"
-                  />
-                </div>
+                <Button 
+                  label="Calcular" 
+                  icon="pi pi-eye" 
+                  severity="info"
+                />
               </div>
             }
           >
@@ -415,11 +404,11 @@ ${installmentOptions.map(option => {
                     setSelectedVariant("");
                   }}
                 />
-                <Button 
+                {/* <Button 
                   label="Confirmar Seleção" 
                   icon="pi pi-check" 
                   disabled={!selectedCreditType || !selectedVariant}
-                />
+                /> */}
               </div>
             }
           >
@@ -703,26 +692,28 @@ ${installmentOptions.map(option => {
                   </p>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3 w-full">
-                  <Button
-                    label="Revisar"
-                    icon="pi pi-eye"
-                    severity="info"
-                    outlined
-                    className="flex-1"
-                    onClick={() => {
-                      document.querySelector('[title="Seleção de Tipo de Crédito"]')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                  />
-                  <Button
-                    label="Iniciar Operação"
-                    icon="pi pi-arrow-right"
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 border-0"
-                    onClick={startConfirmationFlow}
-                  />
+                <div className="space-y-3 w-full">
+                  {/* Main Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      label="Copiar Resumo"
+                      icon="pi pi-copy"
+                      severity="info"
+                      outlined
+                      className="flex-1"
+                      onClick={copyToClipboard}
+                      tooltip="Copia um resumo para enviar ao cliente"
+                    />
+                    <Button
+                      label="Iniciar Operação"
+                      icon="pi pi-arrow-right"
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 border-0"
+                      onClick={startConfirmationFlow}
+                    />
+                  </div>
                   
-                  {/* Trust Indicators - Inline */}
-                  <div className="hidden md:flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 ml-3">
+                  {/* Trust Indicators */}
+                  <div className="flex justify-center items-center gap-6 text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <i className="pi pi-shield text-green-500"></i>
                       <span>Seguro</span>
@@ -730,6 +721,10 @@ ${installmentOptions.map(option => {
                     <div className="flex items-center gap-1">
                       <i className="pi pi-clock text-blue-500"></i>
                       <span>Rápido</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <i className="pi pi-copy text-blue-500"></i>
+                      <span>Compartilhável</span>
                     </div>
                   </div>
                 </div>
