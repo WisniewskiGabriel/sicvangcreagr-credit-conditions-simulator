@@ -2,10 +2,29 @@
 
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
+import { InputText } from "primereact/inputtext";
 import { SelectButton } from "primereact/selectbutton";
+import { Tag } from "primereact/tag";
 import { useState } from "react";
+
+interface Client {
+  id: string;
+  cpf: string;
+  name: string;
+  bankAccount: string;
+  email: string;
+  phone: string;
+}
+
+interface CreditParticipant {
+  client: Client;
+  role: string;
+}
 
 export default function Home() {
   const [selectedInstallments, setSelectedInstallments] = useState<number>(12);
@@ -13,6 +32,13 @@ export default function Home() {
   const [interestRate, setInterestRate] = useState<number>(5.5);
   const [selectedCreditType, setSelectedCreditType] = useState<string>("");
   const [selectedVariant, setSelectedVariant] = useState<string>("");
+  
+  // Confirmation flow state
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<Client[]>([]);
+  const [creditParticipants, setCreditParticipants] = useState<CreditParticipant[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string>("Proponente");
 
   // Installment options
   const installmentOptions = [
@@ -22,6 +48,23 @@ export default function Home() {
     { label: '12x', value: 12 },
     { label: '24x', value: 24 },
     { label: '48x', value: 48 }
+  ];
+
+  // Role options for credit participants
+  const roleOptions = [
+    { label: 'Proponente', value: 'Proponente' },
+    { label: 'Grupo Econômico', value: 'Grupo Econômico' },
+    { label: 'Avalista', value: 'Avalista' }
+  ];
+
+  // Mock client database
+  const mockClients: Client[] = [
+    { id: '1', cpf: '123.456.789-10', name: 'João Silva Santos', bankAccount: '12345-6', email: 'joao@email.com', phone: '(11) 99999-1234' },
+    { id: '2', cpf: '987.654.321-00', name: 'Maria Oliveira Costa', bankAccount: '54321-8', email: 'maria@email.com', phone: '(11) 88888-5678' },
+    { id: '3', cpf: '456.789.123-45', name: 'Carlos Eduardo Lima', bankAccount: '98765-4', email: 'carlos@email.com', phone: '(11) 77777-9012' },
+    { id: '4', cpf: '321.654.987-89', name: 'Ana Paula Ferreira', bankAccount: '11111-2', email: 'ana@email.com', phone: '(11) 66666-3456' },
+    { id: '5', cpf: '789.123.456-12', name: 'Roberto Souza Almeida', bankAccount: '22222-3', email: 'roberto@email.com', phone: '(11) 55555-7890' },
+    { id: '6', cpf: '654.321.789-56', name: 'Fernanda Costa Ribeiro', bankAccount: '33333-4', email: 'fernanda@email.com', phone: '(11) 44444-1234' }
   ];
 
   // Calculate installment value using compound interest formula
@@ -107,6 +150,86 @@ ${installmentOptions.map(option => {
       // Show the text in a prompt as last resort
       prompt('Não foi possível copiar automaticamente. Copie o texto abaixo:', text);
     }
+  };
+
+  // Search clients function
+  const searchClients = (term: string) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const filtered = mockClients.filter(client => 
+      client.cpf.includes(term) ||
+      client.name.toLowerCase().includes(term.toLowerCase()) ||
+      client.bankAccount.includes(term)
+    );
+    
+    setSearchResults(filtered);
+  };
+
+  // Add client to credit participants
+  const addClientToCredit = (client: Client, role: string) => {
+    // Check if client is already added
+    const existingParticipant = creditParticipants.find(p => p.client.id === client.id);
+    
+    if (existingParticipant) {
+      // Update role if client exists
+      setCreditParticipants(prev => 
+        prev.map(p => p.client.id === client.id ? { ...p, role } : p)
+      );
+    } else {
+      // Add new participant
+      setCreditParticipants(prev => [...prev, { client, role }]);
+    }
+
+    // Clear search input and results after adding client
+    setSearchTerm('');
+    setSearchResults([]);
+  };
+
+  // Remove client from credit participants
+  const removeClientFromCredit = (clientId: string) => {
+    setCreditParticipants(prev => prev.filter(p => p.client.id !== clientId));
+  };
+
+  // Start confirmation flow
+  const startConfirmationFlow = () => {
+    if (!selectedCreditType || !selectedVariant) {
+      alert('Por favor, selecione o tipo de crédito e variante antes de continuar.');
+      return;
+    }
+    setShowConfirmationDialog(true);
+  };
+
+  // Finalize credit operation
+  const finalizeCreditOperation = () => {
+    if (creditParticipants.length === 0) {
+      alert('Adicione pelo menos um participante ao crédito.');
+      return;
+    }
+
+    const hasProponente = creditParticipants.some(p => p.role === 'Proponente');
+    if (!hasProponente) {
+      alert('É necessário ter pelo menos um Proponente na operação.');
+      return;
+    }
+
+    // Here you would typically send data to backend
+    console.log('Credit Operation Data:', {
+      loanAmount,
+      interestRate,
+      installments: selectedInstallments,
+      creditType: selectedCreditType,
+      variant: selectedVariant,
+      participants: creditParticipants
+    });
+
+    alert('Operação de crédito iniciada com sucesso!');
+    setShowConfirmationDialog(false);
+    setCreditParticipants([]);
+    setSearchTerm('');
+    setSearchResults([]);
   };
 
   // Credit types data
@@ -202,7 +325,11 @@ ${installmentOptions.map(option => {
                       setSelectedInstallments(12);
                     }}
                   />
-                  <Button label="Calcular" icon="pi pi-calculator" />
+                  <Button 
+                    label="Visualizar Opções" 
+                    icon="pi pi-eye" 
+                    severity="info"
+                  />
                 </div>
               </div>
             }
@@ -451,49 +578,222 @@ ${installmentOptions.map(option => {
           </div>
         </Card>
 
-        {/* <Card title="Quick Start" className="shadow-lg">
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                1
-              </span>
+        {/* Credit Operation Action Section */}
+        <div className="flex justify-center pt-4">
+          <Card className="shadow-lg w-full max-w-md">
+            <div className="text-center space-y-4">
               <div>
-                <p className="font-semibold text-gray-700 dark:text-gray-200">
-                  Development Server
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  Iniciar Operação de Crédito
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Confirme os dados e adicione os participantes da operação
                 </p>
-                <code className="mt-1 block rounded bg-gray-100 px-2 py-1 text-sm dark:bg-gray-800">
-                  npm run dev
-                </code>
+              </div>
+              
+              {/* Validation Status */}
+              <div className="space-y-2">
+                <div className={`flex items-center justify-center gap-2 text-sm ${
+                  selectedCreditType && selectedVariant 
+                    ? 'text-green-600 dark:text-green-400' 
+                    : 'text-orange-600 dark:text-orange-400'
+                }`}>
+                  <i className={`pi ${
+                    selectedCreditType && selectedVariant 
+                      ? 'pi-check-circle' 
+                      : 'pi-exclamation-triangle'
+                  }`}></i>
+                  <span>
+                    {selectedCreditType && selectedVariant 
+                      ? 'Tipo de crédito selecionado' 
+                      : 'Selecione o tipo de crédito'
+                    }
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <i className="pi pi-check-circle"></i>
+                  <span>Valores calculados: {getInstallmentValue(selectedInstallments)} por parcela</span>
+                </div>
+              </div>
+
+              <Button
+                label="Iniciar Operação de Crédito"
+                icon="pi pi-arrow-right"
+                size="large"
+                className="w-full"
+                onClick={startConfirmationFlow}
+                disabled={!selectedCreditType || !selectedVariant}
+              />
+              
+              {(!selectedCreditType || !selectedVariant) && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Complete a seleção do tipo de crédito para continuar
+                </p>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Credit Operation Confirmation Dialog */}
+        <Dialog
+          visible={showConfirmationDialog}
+          style={{ width: '80vw', maxWidth: '1000px' }}
+          header="Confirmar Operação de Crédito"
+          modal
+          onHide={() => setShowConfirmationDialog(false)}
+          footer={
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {creditParticipants.length} participante(s) adicionado(s)
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  label="Cancelar"
+                  icon="pi pi-times"
+                  severity="secondary"
+                  outlined
+                  onClick={() => setShowConfirmationDialog(false)}
+                />
+                <Button
+                  label="Iniciar Operação"
+                  icon="pi pi-check"
+                  severity="success"
+                  onClick={finalizeCreditOperation}
+                  disabled={creditParticipants.length === 0}
+                />
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                2
-              </span>
-              <div>
-                <p className="font-semibold text-gray-700 dark:text-gray-200">
-                  Production Build
-                </p>
-                <code className="mt-1 block rounded bg-gray-100 px-2 py-1 text-sm dark:bg-gray-800">
-                  npm run build
-                </code>
+          }
+        >
+          <div className="space-y-6">
+            {/* Operation Summary */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                Resumo da Operação
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Valor:</span>
+                  <span className="ml-2 font-semibold">{getInstallmentValue(1)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Taxa:</span>
+                  <span className="ml-2 font-semibold">{interestRate}% ao ano</span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Parcelas:</span>
+                  <span className="ml-2 font-semibold">{selectedInstallments}x de {getInstallmentValue(selectedInstallments)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Tipo:</span>
+                  <span className="ml-2 font-semibold">{selectedCreditType} - {selectedVariant}</span>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                3
-              </span>
-              <div>
-                <p className="font-semibold text-gray-700 dark:text-gray-200">
-                  Format Code
-                </p>
-                <code className="mt-1 block rounded bg-gray-100 px-2 py-1 text-sm dark:bg-gray-800">
-                  npm run format
-                </code>
+
+            {/* Client Search */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                Buscar e Adicionar Clientes
+              </h3>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <InputText
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      searchClients(e.target.value);
+                    }}
+                    placeholder="Buscar por CPF, nome ou conta bancária..."
+                    className="w-full"
+                  />
+                </div>
+                <Dropdown
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.value)}
+                  options={roleOptions}
+                  placeholder="Função"
+                  className="w-48"
+                />
               </div>
+
+              {/* Search Results */}
+              {searchResults.length > 0 && (
+                <div className="border rounded-lg dark:border-gray-600">
+                  <DataTable 
+                    value={searchResults} 
+                    size="small"
+                    stripedRows
+                    className="text-sm"
+                  >
+                    <Column field="cpf" header="CPF" />
+                    <Column field="name" header="Nome" />
+                    <Column field="bankAccount" header="Conta" />
+                    <Column
+                      header="Ação"
+                      body={(client: Client) => (
+                        <Button
+                          label="Adicionar"
+                          icon="pi pi-plus"
+                          size="small"
+                          onClick={() => addClientToCredit(client, selectedRole)}
+                          disabled={creditParticipants.some(p => p.client.id === client.id)}
+                        />
+                      )}
+                    />
+                  </DataTable>
+                </div>
+              )}
             </div>
+
+            {/* Selected Participants */}
+            {creditParticipants.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                  Participantes da Operação
+                </h3>
+                <div className="border rounded-lg dark:border-gray-600">
+                  <DataTable 
+                    value={creditParticipants} 
+                    size="small"
+                    stripedRows
+                    className="text-sm"
+                  >
+                    <Column field="client.cpf" header="CPF" />
+                    <Column field="client.name" header="Nome" />
+                    <Column field="client.bankAccount" header="Conta" />
+                    <Column
+                      field="role"
+                      header="Função"
+                      body={(participant: CreditParticipant) => (
+                        <Tag
+                          value={participant.role}
+                          severity={
+                            participant.role === 'Proponente' ? 'success' :
+                            participant.role === 'Avalista' ? 'warning' : 'info'
+                          }
+                        />
+                      )}
+                    />
+                    <Column
+                      header="Ação"
+                      body={(participant: CreditParticipant) => (
+                        <Button
+                          icon="pi pi-trash"
+                          severity="danger"
+                          size="small"
+                          text
+                          onClick={() => removeClientFromCredit(participant.client.id)}
+                        />
+                      )}
+                    />
+                  </DataTable>
+                </div>
+              </div>
+            )}
           </div>
-        </Card> */}
+        </Dialog>
       </main>
     </div>
   );
