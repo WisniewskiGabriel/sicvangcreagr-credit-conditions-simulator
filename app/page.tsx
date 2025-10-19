@@ -34,6 +34,12 @@ export default function Home() {
   const [selectedCreditType, setSelectedCreditType] = useState<string>("");
   const [selectedVariant, setSelectedVariant] = useState<string>("");
   
+  // Initial client selection state
+  const [initialProponentesSelected, setInitialProponentesSelected] = useState<Client[]>([]);
+  const [showInitialClientSelection, setShowInitialClientSelection] = useState<boolean>(true);
+  const [initialSearchTerm, setInitialSearchTerm] = useState<string>("");
+  const [initialSearchResults, setInitialSearchResults] = useState<Client[]>([]);
+  
   // Confirmation flow state
   const [showConfirmationDialog, setShowConfirmationDialog] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -53,6 +59,12 @@ export default function Home() {
   // Role options for credit participants
   const roleOptions = [
     { label: 'Proponente', value: 'Proponente' },
+    { label: 'Grupo Econômico', value: 'Grupo Econômico' },
+    { label: 'Avalista', value: 'Avalista' }
+  ];
+
+  // Role options for new participants in confirmation modal (no Proponente)
+  const additionalRoleOptions = [
     { label: 'Grupo Econômico', value: 'Grupo Econômico' },
     { label: 'Avalista', value: 'Avalista' }
   ];
@@ -168,6 +180,67 @@ ${installmentOptions.map(option => {
     setSearchResults(filtered);
   };
 
+  // Search clients for initial selection
+  const searchInitialClients = (term: string) => {
+    if (!term.trim()) {
+      setInitialSearchResults([]);
+      return;
+    }
+
+    const filtered = mockClients.filter(client => 
+      client.cpf.includes(term) ||
+      client.name.toLowerCase().includes(term.toLowerCase()) ||
+      client.bankAccount.includes(term)
+    );
+    
+    setInitialSearchResults(filtered);
+  };
+
+  // Add client to initial Proponentes selection
+  const addInitialProponente = (client: Client) => {
+    if (!initialProponentesSelected.find(c => c.id === client.id)) {
+      setInitialProponentesSelected(prev => [...prev, client]);
+    }
+    setInitialSearchTerm('');
+    setInitialSearchResults([]);
+  };
+
+  // Remove client from initial Proponentes selection
+  const removeInitialProponente = (clientId: string) => {
+    setInitialProponentesSelected(prev => prev.filter(c => c.id !== clientId));
+  };
+
+  // Confirm initial client selection and proceed to main form
+  const confirmInitialSelection = () => {
+    if (initialProponentesSelected.length === 0) {
+      alert('Selecione pelo menos um Proponente para continuar.');
+      return;
+    }
+    
+    // Add initial proponentes to credit participants
+    const proponenteParticipants: CreditParticipant[] = initialProponentesSelected.map(client => ({
+      client,
+      role: 'Proponente'
+    }));
+    setCreditParticipants(proponenteParticipants);
+    
+    setShowInitialClientSelection(false);
+  };
+
+  // Reset to initial client selection
+  const resetToInitialSelection = () => {
+    setInitialProponentesSelected([]);
+    setInitialSearchTerm('');
+    setInitialSearchResults([]);
+    setCreditParticipants([]);
+    setShowInitialClientSelection(true);
+    setSelectedCreditType("");
+    setSelectedVariant("");
+    setLoanAmount(10000);
+    setInterestRate(5.5);
+    setSelectedInstallments(12);
+  };
+
   // Add client to credit participants
   const addClientToCredit = (client: Client, role: string) => {
     // Ensure we have a valid role
@@ -176,14 +249,25 @@ ${installmentOptions.map(option => {
       return;
     }
 
+    // In confirmation modal, only allow Avalista or Grupo Econômico
+    if (role === 'Proponente') {
+      alert('Proponentes só podem ser selecionados no início. Use Avalista ou Grupo Econômico.');
+      return;
+    }
+
     // Check if client is already added
     const existingParticipant = creditParticipants.find(p => p.client.id === client.id);
     
     if (existingParticipant) {
-      // Update role if client exists
-      setCreditParticipants(prev => 
-        prev.map(p => p.client.id === client.id ? { ...p, role } : p)
-      );
+      // Update role if client exists (only if not a Proponente)
+      if (existingParticipant.role !== 'Proponente') {
+        setCreditParticipants(prev => 
+          prev.map(p => p.client.id === client.id ? { ...p, role } : p)
+        );
+      } else {
+        alert('Proponentes não podem ter sua função alterada.');
+        return;
+      }
     } else {
       // Add new participant with specified role
       setCreditParticipants(prev => [...prev, { client, role }]);
@@ -196,11 +280,31 @@ ${installmentOptions.map(option => {
 
   // Remove client from credit participants
   const removeClientFromCredit = (clientId: string) => {
+    // Check if client is a Proponente (cannot be removed)
+    const participant = creditParticipants.find(p => p.client.id === clientId);
+    if (participant && participant.role === 'Proponente') {
+      alert('Proponentes não podem ser removidos. Para alterar, reinicie a seleção.');
+      return;
+    }
+    
     setCreditParticipants(prev => prev.filter(p => p.client.id !== clientId));
   };
 
   // Update participant role
   const updateParticipantRole = (clientId: string, newRole: string) => {
+    // Check if client is a Proponente (cannot change role)
+    const participant = creditParticipants.find(p => p.client.id === clientId);
+    if (participant && participant.role === 'Proponente') {
+      alert('A função de Proponentes não pode ser alterada.');
+      return;
+    }
+
+    // Don't allow changing to Proponente
+    if (newRole === 'Proponente') {
+      alert('Use apenas Avalista ou Grupo Econômico para novos participantes.');
+      return;
+    }
+    
     setCreditParticipants(prev => 
       prev.map(p => p.client.id === clientId ? { ...p, role: newRole } : p)
     );
@@ -302,34 +406,6 @@ ${installmentOptions.map(option => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
       <main className="mx-auto max-w-6xl space-y-6 py-8">
-        {/* Configuration Ready Warning Banner */}
-        {selectedCreditType && selectedVariant && (
-          <div 
-            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
-            onClick={() => {
-              document.querySelector('[data-scroll-target="credit-operation"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}
-          >
-            <div className="flex items-center justify-center gap-3">
-              <div className="flex items-center gap-2">
-                <i className="pi pi-check-circle text-xl animate-pulse"></i>
-                <div>
-                  <h3 className="font-bold text-lg">
-                    ✅ Configuração Completa - Pronto para Iniciar!
-                  </h3>
-                  <p className="text-sm opacity-90">
-                    Clique aqui para prosseguir com a operação de crédito • {selectedCreditType} - {selectedVariant}
-                  </p>
-                </div>
-              </div>
-              <div className="hidden sm:flex items-center gap-2 ml-auto">
-                <i className="pi pi-arrow-down animate-bounce"></i>
-                <span className="text-sm font-medium">Clique para continuar</span>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold text-gray-800 dark:text-white">
             Simulador de crédito agrícola
@@ -339,507 +415,706 @@ ${installmentOptions.map(option => {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        {/* Initial Client Selection Screen */}
+        {showInitialClientSelection ? (
           <Card
-            title="Calculadora de Empréstimo"
-            className="shadow-lg"
-            footer={
-              <div className="flex justify-end gap-2">
-                <Button
-                  label="Limpar"
-                  icon="pi pi-refresh"
-                  severity="secondary"
-                  outlined
-                  onClick={() => {
-                    setLoanAmount(10000);
-                    setInterestRate(5.5);
-                    setSelectedInstallments(12);
-                  }}
-                />
-                <Button 
-                  label="Ver condições" 
-                  icon="pi pi-eye" 
-                  severity="info"
-                  onClick={() => {
-                    document.querySelector('[data-scroll-target="installment-values"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                />
-              </div>
-            }
+            title="Seleção de Proponentes"
+            className="shadow-xl border-2 border-blue-200 dark:border-blue-800"
+            subTitle="Primeiro, selecione os clientes que serão Proponentes desta operação de crédito"
           >
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="loanAmount"
-                  className="font-semibold text-gray-700 dark:text-gray-200"
-                >
-                  Valor do Empréstimo
-                </label>
-                <InputNumber
-                  id="loanAmount"
-                  value={loanAmount}
-                  onValueChange={(e) => setLoanAmount(e.value ?? 0)}
-                  mode="currency"
-                  currency="BRL"
-                  locale="pt-BR"
-                  className="w-full"
-                />
+            <div className="space-y-6">
+              {/* Info Banner */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                <div className="flex items-start gap-3">
+                  <i className="pi pi-info-circle text-blue-500 text-xl mt-1"></i>
+                  <div>
+                    <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                      Seleção Obrigatória de Proponentes
+                    </h3>
+                    <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
+                      Os <strong>Proponentes</strong> são os clientes principais desta operação de crédito. 
+                      Eles não poderão ser removidos posteriormente e apenas <strong>Avalistas</strong> e 
+                      <strong>Grupo Econômico</strong> poderão ser adicionados depois.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="interestRate"
-                  className="font-semibold text-gray-700 dark:text-gray-200"
-                >
-                  Taxa de Juros (%)
-                </label>
-                
-                {/* Interest Rate Display with Direct Input */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <InputNumber
-                      value={interestRate}
-                      onValueChange={(e) => setInterestRate(Math.max(1, Math.min(30, e.value ?? 0)))}
-                      minFractionDigits={1}
-                      maxFractionDigits={2}
-                      min={1}
-                      max={30}
-                      className="w-24 text-xl font-bold"
-                      suffix="%"
-                    />
-                  </div>
-                  {interestRate < 15 && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full text-sm">
-                      <i className="pi pi-exclamation-triangle"></i>
-                      <span className="font-medium">Não rentável</span>
-                    </div>
-                  )}
+              {/* Search Section */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Buscar Clientes
+                  </label>
+                  <InputText
+                    value={initialSearchTerm}
+                    onChange={(e) => {
+                      setInitialSearchTerm(e.target.value);
+                      searchInitialClients(e.target.value);
+                    }}
+                    placeholder="Buscar por CPF, nome ou conta bancária..."
+                    className="w-full"
+                  />
                 </div>
 
-                {/* Slider with Arrow Controls */}
-                <div className="flex items-center gap-3 px-3">
+                {/* Search Results */}
+                {initialSearchResults.length > 0 && (
+                  <div className="border rounded-lg dark:border-gray-600">
+                    <DataTable 
+                      value={initialSearchResults} 
+                      size="small"
+                      stripedRows
+                      className="text-sm"
+                    >
+                      <Column field="cpf" header="CPF" />
+                      <Column field="name" header="Nome" />
+                      <Column field="bankAccount" header="Conta" />
+                      <Column field="email" header="Email" />
+                      <Column
+                        header="Ação"
+                        body={(client: Client) => (
+                          <Button
+                            label="Selecionar"
+                            icon="pi pi-plus"
+                            size="small"
+                            onClick={() => addInitialProponente(client)}
+                            disabled={initialProponentesSelected.some(c => c.id === client.id)}
+                          />
+                        )}
+                      />
+                    </DataTable>
+                  </div>
+                )}
+              </div>
+
+              {/* Selected Proponentes */}
+              {initialProponentesSelected.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                    Proponentes Selecionados ({initialProponentesSelected.length})
+                  </h3>
+                  <div className="border rounded-lg dark:border-gray-600 bg-green-50 dark:bg-green-900/20">
+                    <DataTable 
+                      value={initialProponentesSelected} 
+                      size="small"
+                      stripedRows
+                      className="text-sm"
+                    >
+                      <Column field="cpf" header="CPF" />
+                      <Column field="name" header="Nome" />
+                      <Column field="bankAccount" header="Conta" />
+                      <Column field="email" header="Email" />
+                      <Column
+                        header=""
+                        body={() => (
+                          <Tag 
+                            value="Proponente" 
+                            severity="success" 
+                            className="text-xs"
+                          />
+                        )}
+                      />
+                      <Column
+                        header="Ação"
+                        body={(client: Client) => (
+                          <Button
+                            icon="pi pi-trash"
+                            severity="danger"
+                            size="small"
+                            text
+                            onClick={() => removeInitialProponente(client.id)}
+                          />
+                        )}
+                      />
+                    </DataTable>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {initialProponentesSelected.length > 0 
+                    ? `${initialProponentesSelected.length} Proponente(s) selecionado(s)`
+                    : 'Nenhum Proponente selecionado'
+                  }
+                </div>
+                <div className="flex gap-3">
                   <Button
-                    icon="pi pi-chevron-left"
-                    size="small"
+                    label="Limpar Seleção"
+                    icon="pi pi-times"
                     severity="secondary"
                     outlined
-                    onClick={() => setInterestRate(Math.max(1, interestRate - 0.1))}
-                    className="p-2"
-                    tooltip="Diminuir 0.1%"
+                    onClick={() => {
+                      setInitialProponentesSelected([]);
+                      setInitialSearchTerm('');
+                      setInitialSearchResults([]);
+                    }}
+                    disabled={initialProponentesSelected.length === 0}
                   />
-                  <div className="flex-1">
-                    <Slider
-                      id="interestRate"
-                      value={interestRate}
-                      onChange={(e) => setInterestRate(e.value as number)}
-                      min={1}
-                      max={30}
-                      step={0.1}
+                  <Button
+                    label="Continuar"
+                    icon="pi pi-arrow-right"
+                    severity="success"
+                    onClick={confirmInitialSelection}
+                    disabled={initialProponentesSelected.length === 0}
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <>
+            {/* Configuration Ready Warning Banner */}
+            {selectedCreditType && selectedVariant && (
+              <div 
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                onClick={() => {
+                  document.querySelector('[data-scroll-target="credit-operation"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <i className="pi pi-check-circle text-xl animate-pulse"></i>
+                    <div>
+                      <h3 className="font-bold text-lg">
+                        ✅ Configuração Completa - Pronto para Iniciar!
+                      </h3>
+                      <p className="text-sm opacity-90">
+                        Clique aqui para prosseguir com a operação de crédito • {selectedCreditType} - {selectedVariant}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 ml-auto">
+                    <i className="pi pi-arrow-down animate-bounce"></i>
+                    <span className="text-sm font-medium">Clique para continuar</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Selected Proponentes Summary Banner */}
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <i className="pi pi-users text-xl"></i>
+                  <div>
+                    <h3 className="font-bold text-lg">
+                      Proponentes Selecionados ({initialProponentesSelected.length})
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {initialProponentesSelected.map(c => c.name).join(', ')}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  label="Alterar Proponentes"
+                  icon="pi pi-pencil"
+              
+                  size="small"
+                  onClick={resetToInitialSelection}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card
+                title="Calculadora de Empréstimo"
+                className="shadow-lg"
+                footer={
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      label="Limpar"
+                      icon="pi pi-refresh"
+                      severity="secondary"
+                      outlined
+                      onClick={() => {
+                        setLoanAmount(10000);
+                        setInterestRate(5.5);
+                        setSelectedInstallments(12);
+                      }}
+                    />
+                    <Button 
+                      label="Ver condições" 
+                      icon="pi pi-eye" 
+                      severity="info"
+                      onClick={() => {
+                        document.querySelector('[data-scroll-target="installment-values"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                    />
+                  </div>
+                }
+              >
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="loanAmount"
+                      className="font-semibold text-gray-700 dark:text-gray-200"
+                    >
+                      Valor do Empréstimo
+                    </label>
+                    <InputNumber
+                      id="loanAmount"
+                      value={loanAmount}
+                      onValueChange={(e) => setLoanAmount(e.value ?? 0)}
+                      mode="currency"
+                      currency="BRL"
+                      locale="pt-BR"
                       className="w-full"
                     />
                   </div>
-                  <Button
-                    icon="pi pi-chevron-right"
-                    size="small"
-                    severity="secondary"
-                    outlined
-                    onClick={() => setInterestRate(Math.min(30, interestRate + 0.1))}
-                    className="p-2"
-                    tooltip="Aumentar 0.1%"
-                  />
-                </div>
 
-                {/* Scale */}
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 px-3 mt-1">
-                  <span>1%</span>
-                  <span>5%</span>
-                  <span>10%</span>
-                  <span className="font-semibold text-orange-600 dark:text-orange-400">15% (Min. Rentável)</span>
-                  <span>20%</span>
-                  <span>25%</span>
-                  <span>30%</span>
-                </div>
-
-                {/* Profit Indicator */}
-                <div className={`mt-2 p-2 rounded-lg text-sm ${
-                  interestRate >= 15 
-                    ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300' 
-                    : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300'
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <i className={`pi ${interestRate >= 15 ? 'pi-check-circle' : 'pi-exclamation-triangle'}`}></i>
-                    <span className="font-medium">
-                      {interestRate >= 15 
-                        ? `Rentável (+${(interestRate - 15).toFixed(1)}% acima do mínimo)` 
-                        : `Prejuízo (${(15 - interestRate).toFixed(1)}% abaixo do mínimo)`
-                      }
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="installments"
-                  className="font-semibold text-gray-700 dark:text-gray-200"
-                >
-                  Opções de Parcelamento
-                </label>
-                <SelectButton
-                  id="installments"
-                  value={selectedInstallments}
-                  onChange={(e) => setSelectedInstallments(e.value)}
-                  options={installmentOptions}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </Card>
-
-          <Card
-            title="Seleção de Tipo de Crédito"
-            className="shadow-lg"
-            footer={
-              <div className="flex justify-end gap-2">
-                <Button
-                  label="Limpar"
-                  icon="pi pi-times"
-                  severity="secondary"
-                  outlined
-                  onClick={() => {
-                    setSelectedCreditType("");
-                    setSelectedVariant("");
-                  }}
-                />
-                {/* <Button 
-                  label="Confirmar Seleção" 
-                  icon="pi pi-check" 
-                  disabled={!selectedCreditType || !selectedVariant}
-                /> */}
-              </div>
-            }
-          >
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="creditType"
-                  className="font-semibold text-gray-700 dark:text-gray-200"
-                >
-                  Tipo de Crédito Agrícola
-                </label>
-                <Dropdown
-                  id="creditType"
-                  value={selectedCreditType}
-                  onChange={(e) => {
-                    setSelectedCreditType(e.value);
-                    setSelectedVariant(""); // Reset variant when type changes
-                  }}
-                  options={creditTypes.creditos_agricolas.map(credit => ({
-                    label: credit.tipo,
-                    value: credit.tipo
-                  }))}
-                  placeholder="Selecione o tipo de crédito"
-                  className="w-full"
-                />
-              </div>
-
-              {selectedCreditType && (
-                <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <i className="pi pi-info-circle mr-2"></i>
-                    {getCurrentCreditType()?.descricao}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="creditVariant"
-                  className="font-semibold text-gray-700 dark:text-gray-200"
-                >
-                  Variante Específica
-                </label>
-                <Dropdown
-                  id="creditVariant"
-                  value={selectedVariant}
-                  onChange={(e) => setSelectedVariant(e.value)}
-                  options={getAvailableVariants()}
-                  placeholder={selectedCreditType ? "Selecione a variante" : "Primeiro selecione o tipo"}
-                  disabled={!selectedCreditType}
-                  className="w-full"
-                />
-              </div>
-
-              {selectedCreditType && selectedVariant && (
-                <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-                  <div className="flex items-center gap-2">
-                    <i className="pi pi-check-circle text-green-600 dark:text-green-400"></i>
-                    <div>
-                      <p className="font-semibold text-green-800 dark:text-green-200">
-                        Seleção Confirmada
-                      </p>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        {selectedCreditType} - {selectedVariant}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-4">
-                <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  Tipos Disponíveis:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {creditTypes.creditos_agricolas.map((credit, index) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="interestRate"
+                      className="font-semibold text-gray-700 dark:text-gray-200"
                     >
-                      {credit.tipo}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Full-width installment values card */}
-        <Card
-          title="Valores por Parcelamento"
-          className="shadow-lg"
-          subTitle={`Baseado no valor de ${getInstallmentValue(1)} com ${Math.round(interestRate * 100) / 100}% ao ano`}
-          data-scroll-target="installment-values"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            {installmentOptions.map((option) => {
-              const isSelected = option.value === selectedInstallments;
-              const value = getInstallmentValue(option.value);
-              
-              return (
-                <div
-                  key={option.value}
-                  className={`rounded-lg p-4 border-2 transition-all duration-200 cursor-pointer text-center ${
-                    isSelected
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400 transform scale-105'
-                      : 'border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:transform hover:scale-102'
-                  }`}
-                  onClick={() => setSelectedInstallments(option.value)}
-                >
-                  <div className="space-y-2">
-                    <div>
-                      <p className={`text-sm font-bold ${
-                        isSelected 
-                          ? 'text-blue-800 dark:text-blue-200' 
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {option.label}
-                      </p>
-                      <p className={`text-xs ${
-                        isSelected 
-                          ? 'text-blue-600 dark:text-blue-300' 
-                          : 'text-gray-500 dark:text-gray-500'
-                      }`}>
-                        {option.value === 1 ? 'À vista' : 'parcelas'}
-                      </p>
-                    </div>
+                      Taxa de Juros (%)
+                    </label>
                     
-                    <div>
-                      <p className={`font-bold transition-all duration-200 ${
-                        isSelected 
-                          ? 'text-2xl text-green-600 dark:text-green-400' 
-                          : 'text-lg text-green-600 dark:text-green-400'
-                      }`}>
-                        {value}
-                      </p>
-                      <p className={`text-xs ${
-                        isSelected 
-                          ? 'text-blue-600 dark:text-blue-300' 
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {option.value === 1 ? 'valor total' : 'por parcela'}
-                      </p>
+                    {/* Interest Rate Display with Direct Input */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <InputNumber
+                          value={interestRate}
+                          onValueChange={(e) => setInterestRate(Math.max(1, Math.min(30, e.value ?? 0)))}
+                          minFractionDigits={1}
+                          maxFractionDigits={2}
+                          min={1}
+                          max={30}
+                          className="w-24 text-xl font-bold"
+                          suffix="%"
+                        />
+                      </div>
+                      {interestRate < 15 && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full text-sm">
+                          <i className="pi pi-exclamation-triangle"></i>
+                          <span className="font-medium">Não rentável</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className={`text-xs ${
-                      isSelected 
-                        ? 'text-blue-600 dark:text-blue-300' 
-                        : 'text-gray-500 dark:text-gray-500'
+                    {/* Slider with Arrow Controls */}
+                    <div className="flex items-center gap-3 px-3">
+                      <Button
+                        icon="pi pi-chevron-left"
+                        size="small"
+                        severity="secondary"
+                        outlined
+                        onClick={() => setInterestRate(Math.max(1, interestRate - 0.1))}
+                        className="p-2"
+                        tooltip="Diminuir 0.1%"
+                      />
+                      <div className="flex-1">
+                        <Slider
+                          id="interestRate"
+                          value={interestRate}
+                          onChange={(e) => setInterestRate(e.value as number)}
+                          min={1}
+                          max={30}
+                          step={0.1}
+                          className="w-full"
+                        />
+                      </div>
+                      <Button
+                        icon="pi pi-chevron-right"
+                        size="small"
+                        severity="secondary"
+                        outlined
+                        onClick={() => setInterestRate(Math.min(30, interestRate + 0.1))}
+                        className="p-2"
+                        tooltip="Aumentar 0.1%"
+                      />
+                    </div>
+
+                    {/* Scale */}
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 px-3 mt-1">
+                      <span>1%</span>
+                      <span>5%</span>
+                      <span>10%</span>
+                      <span className="font-semibold text-orange-600 dark:text-orange-400">15% (Min. Rentável)</span>
+                      <span>20%</span>
+                      <span>25%</span>
+                      <span>30%</span>
+                    </div>
+
+                    {/* Profit Indicator */}
+                    <div className={`mt-2 p-2 rounded-lg text-sm ${
+                      interestRate >= 15 
+                        ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300' 
+                        : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300'
                     }`}>
-                      {option.value === 1 ? 'Sem juros' : 'Juros compostos'}
+                      <div className="flex items-center gap-2">
+                        <i className={`pi ${interestRate >= 15 ? 'pi-check-circle' : 'pi-exclamation-triangle'}`}></i>
+                        <span className="font-medium">
+                          {interestRate >= 15 
+                            ? `Rentável (+${(interestRate - 15).toFixed(1)}% acima do mínimo)` 
+                            : `Prejuízo (${(15 - interestRate).toFixed(1)}% abaixo do mínimo)`
+                          }
+                        </span>
+                      </div>
                     </div>
+                  </div>
 
-                    {isSelected && (
-                      <div className="mt-2 pt-2 border-t border-blue-300 dark:border-blue-600">
-                        <div className="flex items-center justify-center gap-1">
-                          <i className="pi pi-check-circle text-blue-600 dark:text-blue-400 text-sm"></i>
-                          <span className="text-xs font-medium text-blue-800 dark:text-blue-200">
-                            Selecionado
-                          </span>
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="installments"
+                      className="font-semibold text-gray-700 dark:text-gray-200"
+                    >
+                      Opções de Parcelamento
+                    </label>
+                    <SelectButton
+                      id="installments"
+                      value={selectedInstallments}
+                      onChange={(e) => setSelectedInstallments(e.value)}
+                      options={installmentOptions}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              <Card
+                title="Seleção de Tipo de Crédito"
+                className="shadow-lg"
+                footer={
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      label="Limpar"
+                      icon="pi pi-times"
+                      severity="secondary"
+                      outlined
+                      onClick={() => {
+                        setSelectedCreditType("");
+                        setSelectedVariant("");
+                      }}
+                    />
+                  </div>
+                }
+              >
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="creditType"
+                      className="font-semibold text-gray-700 dark:text-gray-200"
+                    >
+                      Tipo de Crédito Agrícola
+                    </label>
+                    <Dropdown
+                      id="creditType"
+                      value={selectedCreditType}
+                      onChange={(e) => {
+                        setSelectedCreditType(e.value);
+                        setSelectedVariant(""); // Reset variant when type changes
+                      }}
+                      options={creditTypes.creditos_agricolas.map(credit => ({
+                        label: credit.tipo,
+                        value: credit.tipo
+                      }))}
+                      placeholder="Selecione o tipo de crédito"
+                      className="w-full"
+                    />
+                  </div>
+
+                  {selectedCreditType && (
+                    <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <i className="pi pi-info-circle mr-2"></i>
+                        {getCurrentCreditType()?.descricao}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="creditVariant"
+                      className="font-semibold text-gray-700 dark:text-gray-200"
+                    >
+                      Variante Específica
+                    </label>
+                    <Dropdown
+                      id="creditVariant"
+                      value={selectedVariant}
+                      onChange={(e) => setSelectedVariant(e.value)}
+                      options={getAvailableVariants()}
+                      placeholder={selectedCreditType ? "Selecione a variante" : "Primeiro selecione o tipo"}
+                      disabled={!selectedCreditType}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {selectedCreditType && selectedVariant && (
+                    <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+                      <div className="flex items-center gap-2">
+                        <i className="pi pi-check-circle text-green-600 dark:text-green-400"></i>
+                        <div>
+                          <p className="font-semibold text-green-800 dark:text-green-200">
+                            Seleção Confirmada
+                          </p>
+                          <p className="text-sm text-green-700 dark:text-green-300">
+                            {selectedCreditType} - {selectedVariant}
+                          </p>
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4">
+                    <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                      Tipos Disponíveis:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {creditTypes.creditos_agricolas.map((credit, index) => (
+                        <span
+                          key={index}
+                          className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                        >
+                          {credit.tipo}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Full-width installment values card */}
+            <Card
+              title="Valores por Parcelamento"
+              className="shadow-lg"
+              subTitle={`Baseado no valor de ${getInstallmentValue(1)} com ${Math.round(interestRate * 100) / 100}% ao ano`}
+              data-scroll-target="installment-values"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {installmentOptions.map((option) => {
+                  const isSelected = option.value === selectedInstallments;
+                  const value = getInstallmentValue(option.value);
+                  
+                  return (
+                    <div
+                      key={option.value}
+                      className={`rounded-lg p-4 border-2 transition-all duration-200 cursor-pointer text-center ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400 transform scale-105'
+                          : 'border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:transform hover:scale-102'
+                      }`}
+                      onClick={() => setSelectedInstallments(option.value)}
+                    >
+                      <div className="space-y-2">
+                        <div>
+                          <p className={`text-sm font-bold ${
+                            isSelected 
+                              ? 'text-blue-800 dark:text-blue-200' 
+                              : 'text-gray-600 dark:text-gray-400'
+                          }`}>
+                            {option.label}
+                          </p>
+                          <p className={`text-xs ${
+                            isSelected 
+                              ? 'text-blue-600 dark:text-blue-300' 
+                              : 'text-gray-500 dark:text-gray-500'
+                          }`}>
+                            {option.value === 1 ? 'À vista' : 'parcelas'}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <p className={`font-bold transition-all duration-200 ${
+                            isSelected 
+                              ? 'text-2xl text-green-600 dark:text-green-400' 
+                              : 'text-lg text-green-600 dark:text-green-400'
+                          }`}>
+                            {value}
+                          </p>
+                          <p className={`text-xs ${
+                            isSelected 
+                              ? 'text-blue-600 dark:text-blue-300' 
+                              : 'text-gray-600 dark:text-gray-400'
+                          }`}>
+                            {option.value === 1 ? 'valor total' : 'por parcela'}
+                          </p>
+                        </div>
+
+                        <div className={`text-xs ${
+                          isSelected 
+                            ? 'text-blue-600 dark:text-blue-300' 
+                            : 'text-gray-500 dark:text-gray-500'
+                        }`}>
+                          {option.value === 1 ? 'Sem juros' : 'Juros compostos'}
+                        </div>
+
+                        {isSelected && (
+                          <div className="mt-2 pt-2 border-t border-blue-300 dark:border-blue-600">
+                            <div className="flex items-center justify-center gap-1">
+                              <i className="pi pi-check-circle text-blue-600 dark:text-blue-400 text-sm"></i>
+                              <span className="text-xs font-medium text-blue-800 dark:text-blue-200">
+                                Selecionado
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* Credit Operation Action Section */}
+            <Card className="shadow-xl border-2 border-blue-200 dark:border-blue-800" data-scroll-target="credit-operation">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg">
+                {/* Header Section */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-500 p-2 rounded-full text-white">
+                      <i className="pi pi-credit-card text-xl"></i>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                        Iniciar Operação de Crédito
+                      </h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Revise os dados e confirme a operação
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Status Tag */}
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                    selectedCreditType && selectedVariant 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                      : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                  }`}>
+                    <i className={`pi text-xs ${
+                      selectedCreditType && selectedVariant 
+                        ? 'pi-check-circle' 
+                        : 'pi-exclamation-triangle'
+                    }`}></i>
+                    <span className="font-medium">
+                      {selectedCreditType && selectedVariant ? 'Pronto' : 'Pendente'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Quick Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                  {/* Loan Amount Card */}
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center gap-2 mb-1">
+                      <i className="pi pi-dollar text-green-500 text-sm"></i>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Valor</span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-800 dark:text-white">
+                      {getInstallmentValue(1)}
+                    </p>
+                  </div>
+
+                  {/* Interest Rate Card */}
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center gap-2 mb-1">
+                      <i className="pi pi-percentage text-blue-500 text-sm"></i>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Taxa</span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-800 dark:text-white">
+                      {Math.round(interestRate * 100) / 100}% a.a.
+                    </p>
+                  </div>
+
+                  {/* Installments Card */}
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center gap-2 mb-1">
+                      <i className="pi pi-calendar text-purple-500 text-sm"></i>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Parcelas</span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-800 dark:text-white">
+                      {selectedInstallments}x
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {getInstallmentValue(selectedInstallments)}
+                    </p>
+                  </div>
+
+                  {/* Credit Type Card */}
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center gap-2 mb-1">
+                      <i className="pi pi-tag text-orange-500 text-sm"></i>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tipo</span>
+                    </div>
+                    {selectedCreditType ? (
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 dark:text-white truncate">
+                          {selectedCreditType}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {selectedVariant}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-orange-500 font-semibold">
+                        Não selecionado
+                      </p>
                     )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </Card>
 
-        {/* Credit Operation Action Section */}
-        <Card className="shadow-xl border-2 border-blue-200 dark:border-blue-800" data-scroll-target="credit-operation">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg">
-            {/* Header Section */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-500 p-2 rounded-full text-white">
-                  <i className="pi pi-credit-card text-xl"></i>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-                    Iniciar Operação de Crédito
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Revise os dados e confirme a operação
-                  </p>
-                </div>
-              </div>
-              
-              {/* Status Tag */}
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                selectedCreditType && selectedVariant 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
-                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-              }`}>
-                <i className={`pi text-xs ${
-                  selectedCreditType && selectedVariant 
-                    ? 'pi-check-circle' 
-                    : 'pi-exclamation-triangle'
-                }`}></i>
-                <span className="font-medium">
-                  {selectedCreditType && selectedVariant ? 'Pronto' : 'Pendente'}
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              {/* Loan Amount Card */}
-              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
-                <div className="flex items-center gap-2 mb-1">
-                  <i className="pi pi-dollar text-green-500 text-sm"></i>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Valor</span>
-                </div>
-                <p className="text-lg font-bold text-gray-800 dark:text-white">
-                  {getInstallmentValue(1)}
-                </p>
-              </div>
-
-              {/* Interest Rate Card */}
-              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
-                <div className="flex items-center gap-2 mb-1">
-                  <i className="pi pi-percentage text-blue-500 text-sm"></i>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Taxa</span>
-                </div>
-                <p className="text-lg font-bold text-gray-800 dark:text-white">
-                  {Math.round(interestRate * 100) / 100}% a.a.
-                </p>
-              </div>
-
-              {/* Installments Card */}
-              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
-                <div className="flex items-center gap-2 mb-1">
-                  <i className="pi pi-calendar text-purple-500 text-sm"></i>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Parcelas</span>
-                </div>
-                <p className="text-lg font-bold text-gray-800 dark:text-white">
-                  {selectedInstallments}x
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {getInstallmentValue(selectedInstallments)}
-                </p>
-              </div>
-
-              {/* Credit Type Card */}
-              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
-                <div className="flex items-center gap-2 mb-1">
-                  <i className="pi pi-tag text-orange-500 text-sm"></i>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tipo</span>
-                </div>
-                {selectedCreditType ? (
-                  <div>
-                    <p className="text-sm font-bold text-gray-800 dark:text-white truncate">
-                      {selectedCreditType}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {selectedVariant}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-orange-500 font-semibold">
-                    Não selecionado
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              {(!selectedCreditType || !selectedVariant) ? (
-                <div className="text-center w-full">
-                  <Button
-                    label="Complete a Configuração"
-                    icon="pi pi-exclamation-triangle"
-                    severity="warning"
-                    disabled
-                    className="w-full sm:w-auto"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Selecione o tipo de crédito para continuar
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3 w-full">
-                  {/* Main Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button
-                      label="Copiar Resumo"
-                      icon="pi pi-copy"
-                      severity="info"
-                      outlined
-                      className="flex-1"
-                      onClick={copyToClipboard}
-                      tooltip="Copia um resumo para enviar ao cliente"
-                    />
-                    <Button
-                      label="Iniciar Operação"
-                      icon="pi pi-arrow-right"
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 border-0"
-                      onClick={startConfirmationFlow}
-                    />
-                  </div>
-                  
-                  {/* Trust Indicators */}
-                  <div className="flex justify-center items-center gap-6 text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <i className="pi pi-shield text-green-500"></i>
-                      <span>Seguro</span>
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                  {(!selectedCreditType || !selectedVariant) ? (
+                    <div className="text-center w-full">
+                      <Button
+                        label="Complete a Configuração"
+                        icon="pi pi-exclamation-triangle"
+                        severity="warning"
+                        disabled
+                        className="w-full sm:w-auto"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Selecione o tipo de crédito para continuar
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <i className="pi pi-clock text-blue-500"></i>
-                      <span>Rápido</span>
+                  ) : (
+                    <div className="space-y-3 w-full">
+                      {/* Main Action Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                          label="Copiar Resumo"
+                          icon="pi pi-copy"
+                          severity="info"
+                          outlined
+                          className="flex-1"
+                          onClick={copyToClipboard}
+                          tooltip="Copia um resumo para enviar ao cliente"
+                        />
+                        <Button
+                          label="Iniciar Operação"
+                          icon="pi pi-arrow-right"
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 border-0"
+                          onClick={startConfirmationFlow}
+                        />
+                      </div>
+                      
+                      {/* Trust Indicators */}
+                      <div className="flex justify-center items-center gap-6 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <i className="pi pi-shield text-green-500"></i>
+                          <span>Seguro</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <i className="pi pi-clock text-blue-500"></i>
+                          <span>Rápido</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <i className="pi pi-copy text-blue-500"></i>
+                          <span>Compartilhável</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <i className="pi pi-copy text-blue-500"></i>
-                      <span>Compartilhável</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </Card>
+              </div>
+            </Card>
+          </>
+        )}
 
         {/* Credit Operation Confirmation Dialog */}
         <Dialog
@@ -847,7 +1122,11 @@ ${installmentOptions.map(option => {
           style={{ width: '80vw', maxWidth: '1000px' }}
           header="Confirmar Operação de Crédito"
           modal
-          onHide={() => setShowConfirmationDialog(false)}
+          onHide={() => {
+            setShowConfirmationDialog(false);
+            setSearchTerm('');
+            setSearchResults([]);
+          }}
           footer={
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -859,7 +1138,11 @@ ${installmentOptions.map(option => {
                   icon="pi pi-times"
                   severity="secondary"
                   outlined
-                  onClick={() => setShowConfirmationDialog(false)}
+                  onClick={() => {
+                    setShowConfirmationDialog(false);
+                    setSearchTerm('');
+                    setSearchResults([]);
+                  }}
                 />
                 <Button
                   label="Iniciar Operação"
@@ -900,9 +1183,14 @@ ${installmentOptions.map(option => {
 
             {/* Client Search */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-200">
-                Buscar e Adicionar Clientes
-              </h3>
+              <div>
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">
+                  Buscar e Adicionar Clientes
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Clientes serão adicionados como <strong>Avalista</strong> por padrão. Você pode alterar a função na tabela abaixo após adicionar.
+                </p>
+              </div>
               <div>
                 <InputText
                   value={searchTerm}
@@ -934,7 +1222,7 @@ ${installmentOptions.map(option => {
                           label="Adicionar"
                           icon="pi pi-plus"
                           size="small"
-                          onClick={() => addClientToCredit(client, "Proponente")}
+                          onClick={() => addClientToCredit(client, "Avalista")}
                           disabled={creditParticipants.some(p => p.client.id === client.id)}
                         />
                       )}
@@ -964,24 +1252,39 @@ ${installmentOptions.map(option => {
                       field="role"
                       header="Função"
                       body={(participant: CreditParticipant) => (
-                        <Dropdown
-                          value={participant.role}
-                          onChange={(e) => updateParticipantRole(participant.client.id, e.value)}
-                          options={roleOptions}
-                          className="w-full"
-                        />
+                        participant.role === 'Proponente' ? (
+                          <div className="flex items-center gap-2">
+                            <Tag value="Proponente" severity="success" className="text-xs" />
+                            <i className="pi pi-lock text-gray-400 text-xs" title="Não pode ser alterado"></i>
+                          </div>
+                        ) : (
+                          <Dropdown
+                            value={participant.role}
+                            onChange={(e) => updateParticipantRole(participant.client.id, e.value)}
+                            options={additionalRoleOptions}
+                            placeholder="Selecione função"
+                            className="w-full"
+                          />
+                        )
                       )}
                     />
                     <Column
                       header="Ação"
                       body={(participant: CreditParticipant) => (
-                        <Button
-                          icon="pi pi-trash"
-                          severity="danger"
-                          size="small"
-                          text
-                          onClick={() => removeClientFromCredit(participant.client.id)}
-                        />
+                        participant.role === 'Proponente' ? (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <i className="pi pi-lock"></i>
+                            <span>Fixo</span>
+                          </div>
+                        ) : (
+                          <Button
+                            icon="pi pi-trash"
+                            severity="danger"
+                            size="small"
+                            text
+                            onClick={() => removeClientFromCredit(participant.client.id)}
+                          />
+                        )
                       )}
                     />
                   </DataTable>
