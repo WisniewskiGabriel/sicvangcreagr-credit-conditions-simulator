@@ -338,7 +338,7 @@ ${installmentOptions.map(option => {
                     }}
                   />
                   <Button 
-                    label="Visualizar Opções" 
+                    label="Calcular" 
                     icon="pi pi-eye" 
                     severity="info"
                   />
@@ -591,61 +591,152 @@ ${installmentOptions.map(option => {
         </Card>
 
         {/* Credit Operation Action Section */}
-        <div className="flex justify-center pt-4">
-          <Card className="shadow-lg w-full max-w-md">
-            <div className="text-center space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                  Iniciar Operação de Crédito
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Confirme os dados e adicione os participantes da operação
-                </p>
+        <Card className="shadow-xl border-2 border-blue-200 dark:border-blue-800">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg">
+            {/* Header Section */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-500 p-2 rounded-full text-white">
+                  <i className="pi pi-credit-card text-xl"></i>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                    Iniciar Operação de Crédito
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Revise os dados e confirme a operação
+                  </p>
+                </div>
               </div>
               
-              {/* Validation Status */}
-              <div className="space-y-2">
-                <div className={`flex items-center justify-center gap-2 text-sm ${
+              {/* Status Tag */}
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                selectedCreditType && selectedVariant 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+              }`}>
+                <i className={`pi text-xs ${
                   selectedCreditType && selectedVariant 
-                    ? 'text-green-600 dark:text-green-400' 
-                    : 'text-orange-600 dark:text-orange-400'
-                }`}>
-                  <i className={`pi ${
-                    selectedCreditType && selectedVariant 
-                      ? 'pi-check-circle' 
-                      : 'pi-exclamation-triangle'
-                  }`}></i>
-                  <span>
-                    {selectedCreditType && selectedVariant 
-                      ? 'Tipo de crédito selecionado' 
-                      : 'Selecione o tipo de crédito'
-                    }
-                  </span>
+                    ? 'pi-check-circle' 
+                    : 'pi-exclamation-triangle'
+                }`}></i>
+                <span className="font-medium">
+                  {selectedCreditType && selectedVariant ? 'Pronto' : 'Pendente'}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              {/* Loan Amount Card */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center gap-2 mb-1">
+                  <i className="pi pi-dollar text-green-500 text-sm"></i>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Valor</span>
                 </div>
-                
-                <div className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400">
-                  <i className="pi pi-check-circle"></i>
-                  <span>Valores calculados: {getInstallmentValue(selectedInstallments)} por parcela</span>
-                </div>
+                <p className="text-lg font-bold text-gray-800 dark:text-white">
+                  {getInstallmentValue(1)}
+                </p>
               </div>
 
-              <Button
-                label="Iniciar Operação de Crédito"
-                icon="pi pi-arrow-right"
-                size="large"
-                className="w-full"
-                onClick={startConfirmationFlow}
-                disabled={!selectedCreditType || !selectedVariant}
-              />
-              
-              {(!selectedCreditType || !selectedVariant) && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Complete a seleção do tipo de crédito para continuar
+              {/* Interest Rate Card */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center gap-2 mb-1">
+                  <i className="pi pi-percentage text-blue-500 text-sm"></i>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Taxa</span>
+                </div>
+                <p className="text-lg font-bold text-gray-800 dark:text-white">
+                  {interestRate}% a.a.
                 </p>
+              </div>
+
+              {/* Installments Card */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center gap-2 mb-1">
+                  <i className="pi pi-calendar text-purple-500 text-sm"></i>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Parcelas</span>
+                </div>
+                <p className="text-lg font-bold text-gray-800 dark:text-white">
+                  {selectedInstallments}x
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {getInstallmentValue(selectedInstallments)}
+                </p>
+              </div>
+
+              {/* Credit Type Card */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center gap-2 mb-1">
+                  <i className="pi pi-tag text-orange-500 text-sm"></i>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tipo</span>
+                </div>
+                {selectedCreditType ? (
+                  <div>
+                    <p className="text-sm font-bold text-gray-800 dark:text-white truncate">
+                      {selectedCreditType}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {selectedVariant}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-orange-500 font-semibold">
+                    Não selecionado
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              {(!selectedCreditType || !selectedVariant) ? (
+                <div className="text-center w-full">
+                  <Button
+                    label="Complete a Configuração"
+                    icon="pi pi-exclamation-triangle"
+                    severity="warning"
+                    disabled
+                    className="w-full sm:w-auto"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Selecione o tipo de crédito para continuar
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
+                  <Button
+                    label="Revisar"
+                    icon="pi pi-eye"
+                    severity="info"
+                    outlined
+                    className="flex-1"
+                    onClick={() => {
+                      document.querySelector('[title="Seleção de Tipo de Crédito"]')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  />
+                  <Button
+                    label="Iniciar Operação"
+                    icon="pi pi-arrow-right"
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 border-0"
+                    onClick={startConfirmationFlow}
+                  />
+                  
+                  {/* Trust Indicators - Inline */}
+                  <div className="hidden md:flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 ml-3">
+                    <div className="flex items-center gap-1">
+                      <i className="pi pi-shield text-green-500"></i>
+                      <span>Seguro</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <i className="pi pi-clock text-blue-500"></i>
+                      <span>Rápido</span>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
 
         {/* Credit Operation Confirmation Dialog */}
         <Dialog
