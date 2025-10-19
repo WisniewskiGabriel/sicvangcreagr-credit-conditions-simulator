@@ -71,15 +71,41 @@ ${installmentOptions.map(option => {
     return template;
   };
 
-  // Copy to clipboard function
+  // Copy to clipboard function with fallback
   const copyToClipboard = async () => {
+    const text = generateClientTemplate();
+    
     try {
-      await navigator.clipboard.writeText(generateClientTemplate());
-      // You could add a toast notification here
-      alert('Informações copiadas para a área de transferência!');
+      // Check if clipboard API is available
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        alert('Informações copiadas para a área de transferência!');
+      } else {
+        // Fallback method for older browsers or non-secure contexts
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+          alert('Informações copiadas para a área de transferência!');
+        } catch (fallbackErr) {
+          console.error('Fallback copy failed:', fallbackErr);
+          // Show the text in a prompt as last resort
+          prompt('Copie o texto abaixo:', text);
+        }
+        
+        document.body.removeChild(textArea);
+      }
     } catch (err) {
       console.error('Erro ao copiar:', err);
-      alert('Erro ao copiar para a área de transferência');
+      // Show the text in a prompt as last resort
+      prompt('Não foi possível copiar automaticamente. Copie o texto abaixo:', text);
     }
   };
 
