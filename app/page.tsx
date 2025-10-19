@@ -38,7 +38,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Client[]>([]);
   const [creditParticipants, setCreditParticipants] = useState<CreditParticipant[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string>("Proponente");
 
   // Installment options
   const installmentOptions = [
@@ -170,6 +169,12 @@ ${installmentOptions.map(option => {
 
   // Add client to credit participants
   const addClientToCredit = (client: Client, role: string) => {
+    // Ensure we have a valid role
+    if (!role) {
+      alert('Selecione uma função para o cliente.');
+      return;
+    }
+
     // Check if client is already added
     const existingParticipant = creditParticipants.find(p => p.client.id === client.id);
     
@@ -179,7 +184,7 @@ ${installmentOptions.map(option => {
         prev.map(p => p.client.id === client.id ? { ...p, role } : p)
       );
     } else {
-      // Add new participant
+      // Add new participant with specified role
       setCreditParticipants(prev => [...prev, { client, role }]);
     }
 
@@ -191,6 +196,13 @@ ${installmentOptions.map(option => {
   // Remove client from credit participants
   const removeClientFromCredit = (clientId: string) => {
     setCreditParticipants(prev => prev.filter(p => p.client.id !== clientId));
+  };
+
+  // Update participant role
+  const updateParticipantRole = (clientId: string, newRole: string) => {
+    setCreditParticipants(prev => 
+      prev.map(p => p.client.id === clientId ? { ...p, role: newRole } : p)
+    );
   };
 
   // Start confirmation flow
@@ -697,24 +709,15 @@ ${installmentOptions.map(option => {
               <h3 className="font-semibold text-gray-800 dark:text-gray-200">
                 Buscar e Adicionar Clientes
               </h3>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <InputText
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      searchClients(e.target.value);
-                    }}
-                    placeholder="Buscar por CPF, nome ou conta bancária..."
-                    className="w-full"
-                  />
-                </div>
-                <Dropdown
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.value)}
-                  options={roleOptions}
-                  placeholder="Função"
-                  className="w-48"
+              <div>
+                <InputText
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    searchClients(e.target.value);
+                  }}
+                  placeholder="Buscar por CPF, nome ou conta bancária..."
+                  className="w-full"
                 />
               </div>
 
@@ -737,7 +740,7 @@ ${installmentOptions.map(option => {
                           label="Adicionar"
                           icon="pi pi-plus"
                           size="small"
-                          onClick={() => addClientToCredit(client, selectedRole)}
+                          onClick={() => addClientToCredit(client, "Proponente")}
                           disabled={creditParticipants.some(p => p.client.id === client.id)}
                         />
                       )}
@@ -767,12 +770,11 @@ ${installmentOptions.map(option => {
                       field="role"
                       header="Função"
                       body={(participant: CreditParticipant) => (
-                        <Tag
+                        <Dropdown
                           value={participant.role}
-                          severity={
-                            participant.role === 'Proponente' ? 'success' :
-                            participant.role === 'Avalista' ? 'warning' : 'info'
-                          }
+                          onChange={(e) => updateParticipantRole(participant.client.id, e.value)}
+                          options={roleOptions}
+                          className="w-full"
                         />
                       )}
                     />
