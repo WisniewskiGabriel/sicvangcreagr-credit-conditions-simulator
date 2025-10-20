@@ -3,8 +3,8 @@ import "./globals.css";
 import ThemeProvider from "./components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Credit Conditions Simulator",
-  description: "SICVANGCREAGR Credit Conditions Simulator",
+  title: "Protótipo SICVANGCREAGR",
+  description: "SICVANGCREAGR - Crédito agrícola",
 };
 
 export default function RootLayout({
