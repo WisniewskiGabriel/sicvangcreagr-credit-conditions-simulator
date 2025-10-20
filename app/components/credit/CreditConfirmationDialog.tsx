@@ -113,10 +113,10 @@ export const CreditConfirmationDialog = ({
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-gray-200">
-              Buscar e Adicionar Clientes
+              Buscar e Adicionar Associados
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Clientes serão adicionados como <strong>Avalista</strong> por padrão. Você pode alterar a função na tabela abaixo após adicionar.
+              Associados serão adicionados como <strong>Avalista</strong> por padrão. Você pode alterar a função na tabela abaixo após adicionar.
             </p>
           </div>
           <div>

@@ -39,7 +39,7 @@ export const InitialClientSelection = ({
     <Card
       title="Seleção de Proponentes"
       className="shadow-xl border-2 border-blue-200 dark:border-blue-800"
-      subTitle="Primeiro, selecione os clientes que serão Proponentes desta operação de crédito"
+      subTitle="Primeiro, selecione os associados que serão Proponentes desta operação de crédito"
     >
       <div className="space-y-6">
         {/* Info Banner */}
@@ -51,7 +51,7 @@ export const InitialClientSelection = ({
                 Seleção Obrigatória de Proponentes
               </h3>
               <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
-                Os <strong>Proponentes</strong> são os clientes principais desta operação de crédito. 
+                Os <strong>Proponentes</strong> são os associados principais desta operação de crédito. 
                 Eles não poderão ser removidos posteriormente e apenas <strong>Avalistas</strong> e 
                 <strong>Grupo Econômico</strong> poderão ser adicionados depois.
               </p>
@@ -63,7 +63,7 @@ export const InitialClientSelection = ({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Buscar Clientes
+              Buscar Associados
             </label>
             <InputText
               value={searchTerm}

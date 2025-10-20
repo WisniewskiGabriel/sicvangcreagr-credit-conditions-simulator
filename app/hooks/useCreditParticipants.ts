@@ -7,7 +7,7 @@ export const useCreditParticipants = () => {
   const addParticipant = (client: Client, role: string): boolean => {
     // Ensure we have a valid role
     if (!role) {
-      alert('Selecione uma função para o cliente.');
+      alert('Selecione uma função para o associado.');
       return false;
     }
 

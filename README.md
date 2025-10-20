@@ -1,136 +1,224 @@
-# SICVANGCREAGR Credit Conditions Simulator
+# 🌾 Simulador de Condições de Crédito Agrícola - SICVANGCREAGR
 
-A modern credit conditions simulator built with Next.js 15.5+ and PrimeReact.
+## 📝 Sobre o Projeto
 
-## 🚀 Features
+Este é um **protótipo** de uma tela para negociação de crédito destinada a clientes do setor agrícola. O sistema simula o processo completo de solicitação e configuração de operações de crédito rural, desde a seleção inicial de proponentes até a finalização da operação.
 
-- ⚡ **Next.js 15.5.6** - Latest version with App Router
-- 🔥 **TurboPack** - Ultra-fast bundler for development and production builds
-- 🎨 **PrimeReact** - Rich UI component library
-- 🎯 **TypeScript** - Type-safe development
-- 💅 **Tailwind CSS v4** - Utility-first CSS framework
-- ✨ **Prettier** - Consistent code formatting with TailwindCSS plugin
-- 🔍 **ESLint** - Code quality and best practices
+### 🎯 Objetivo
 
-## 📦 Tech Stack
+Desenvolver uma interface moderna e intuitiva que permita:
+- Simulação de condições de crédito agrícola
+- Seleção e gestão de proponentes e participantes
+- Cálculo automático de parcelas e juros
+- Configuração de diferentes tipos de crédito rural
+- Fluxo completo de negociação de crédito
 
-- **Framework**: Next.js 15.5.6
-- **UI Components**: PrimeReact 10.9.7
-- **Styling**: Tailwind CSS v4 + PrimeReact Themes
-- **Language**: TypeScript 5
-- **Bundler**: TurboPack (enabled by default)
-- **Code Quality**: ESLint + Prettier
+## 🌟 Funcionalidades Principais
 
-## 🛠️ Getting Started
+### � **Simulador de Empréstimo**
+- Cálculo automático de parcelas baseado em valor, taxa de juros e prazo
+- Suporte a diferentes opções de parcelamento (1x, 2x, 6x, 12x, 24x, 48x)
+- Visualização detalhada dos valores de cada parcela
+- Interface responsiva com validação em tempo real
 
-### Prerequisites
+### 👥 **Gestão de Participantes**
+- Seleção inicial de proponentes
+- Adição de participantes com diferentes funções:
+  - **Proponente**: Cliente principal da operação
+  - **Grupo Econômico**: Empresas relacionadas
+  - **Avalista**: Garantidores da operação
+- Sistema de busca e filtro de clientes
 
-- Node.js 20.x or later
-- npm 10.x or later
+### 🏛️ **Tipos de Crédito Agrícola**
+- **Custeio**: Cobertura de despesas do ciclo produtivo
+  - Pronaf Custeio, Pronamp Custeio, Custeio para Pecuária, etc.
+- **Investimento**: Aquisição de bens duráveis
+  - FINAME, Irrigação, Benfeitorias, Pronaf Investimento, etc.
+- **CPR (Cédula de Produto Rural)**: Financiamento e comercialização
+  - CPR Física/Financeira, Pré/Pós-fixada, Indexada, etc.
 
-### Installation
+### � **Fluxo de Confirmação**
+- Validação completa dos dados inseridos
+- Revisão de todas as condições antes da finalização
+- Sistema de confirmação em etapas para segurança
+
+## � Tecnologias Utilizadas
+
+- **Framework**: Next.js 15.5.6 com App Router
+- **Bundler**: TurboPack para builds ultra-rápidos
+- **UI**: PrimeReact 10.9.7 - Biblioteca completa de componentes
+- **Linguagem**: TypeScript 5 para desenvolvimento type-safe
+- **Estilização**: Tailwind CSS v4 com plugins do PrimeReact
+- **Qualidade**: ESLint + Prettier para formatação consistente
+
+## 🛠️ Instalação e Execução
+
+### Pré-requisitos
+
+- Node.js 20.x ou superior
+- npm 10.x ou superior
+
+### Instalação
 
 ```bash
-# Install dependencies
+# Clone o repositório
+git clone https://github.com/WisniewskiGabriel/sicvangcreagr-credit-conditions-simulator.git
+
+# Entre no diretório do projeto
+cd sicvangcreagr-credit-conditions-simulator
+
+# Instale as dependências
 npm install
 ```
 
-### Development
+### Desenvolvimento
 
 ```bash
-# Run development server with TurboPack
+# Execute o servidor de desenvolvimento com TurboPack
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador para ver o resultado.
 
-### Production Build
+### Build de Produção
 
 ```bash
-# Build for production with TurboPack
+# Build para produção com TurboPack
 npm run build
 
-# Start production server
+# Inicie o servidor de produção
 npm start
 ```
 
-### Code Quality
+### Qualidade de Código
 
 ```bash
-# Format code with Prettier
+# Formate o código com Prettier
 npm run format
 
-# Check formatting
+# Verifique a formatação
 npm run format:check
 
-# Run ESLint
+# Execute o ESLint
 npm run lint
 ```
 
-## 📁 Project Structure
+## 📁 Estrutura do Projeto
 
 ```
-├── app/                  # Next.js App Router pages
-│   ├── globals.css      # Global styles + PrimeReact CSS imports
-│   ├── layout.tsx       # Root layout
-│   └── page.tsx         # Home page with PrimeReact demo
-├── public/              # Static assets
-├── .eslintrc.json       # ESLint configuration
-├── .prettierrc.json     # Prettier configuration
-├── next.config.ts       # Next.js configuration with TurboPack
-├── tsconfig.json        # TypeScript configuration
-└── package.json         # Dependencies and scripts
+├── app/                          # Páginas do Next.js App Router
+│   ├── components/               # Componentes React reutilizáveis
+│   │   ├── credit/              # Componentes específicos de crédito
+│   │   │   ├── CreditConfirmationDialog.tsx
+│   │   │   ├── CreditOperationAction.tsx
+│   │   │   ├── CreditTypeSelector.tsx
+│   │   │   ├── InitialClientSelection.tsx
+│   │   │   ├── InstallmentValuesDisplay.tsx
+│   │   │   └── LoanCalculator.tsx
+│   │   └── ui/                  # Componentes de interface geral
+│   │       ├── ConfigurationReadyBanner.tsx
+│   │       ├── PageHeader.tsx
+│   │       └── ProponentesSummaryBanner.tsx
+│   ├── constants/               # Constantes e dados mock
+│   ├── hooks/                   # Custom hooks do React
+│   │   ├── useClientSearch.ts
+│   │   ├── useCreditParticipants.ts
+│   │   ├── useCreditTypeSelection.ts
+│   │   └── useLoanCalculator.ts
+│   ├── types/                   # Definições de tipos TypeScript
+│   ├── utils/                   # Funções utilitárias
+│   ├── globals.css             # Estilos globais + CSS do PrimeReact
+│   ├── layout.tsx              # Layout raiz da aplicação
+│   └── page.tsx                # Página principal
+├── public/                      # Assets estáticos
+├── next.config.ts              # Configuração do Next.js
+├── tsconfig.json               # Configuração do TypeScript
+└── package.json                # Dependências e scripts
 ```
 
-## 🎨 PrimeReact Integration
+## 🎨 Integração com PrimeReact
 
-PrimeReact is fully integrated with:
+O PrimeReact está totalmente integrado com:
 
-- Theme: Lara Light Blue (customizable)
-- Icons: PrimeIcons
-- All components available for use
+- **Tema**: Lara Light Blue (customizável)
+- **Ícones**: PrimeIcons
+- **Componentes**: Todos os componentes disponíveis para uso
 
-Example usage:
+Exemplo de uso:
 
 ```tsx
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 
-export default function MyComponent() {
+export default function MeuComponente() {
   return (
-    <Card title="My Card">
-      <Button label="Click Me" icon="pi pi-check" />
+    <Card title="Meu Card">
+      <Button label="Clique Aqui" icon="pi pi-check" />
     </Card>
   );
 }
 ```
 
-## 🔧 Configuration Highlights
+## � Fluxo de Uso da Aplicação
+
+1. **Seleção Inicial**: Escolha dos proponentes principais
+2. **Configuração**: Definição de valores, taxa de juros e parcelas
+3. **Tipo de Crédito**: Seleção do tipo de crédito agrícola e variante
+4. **Visualização**: Análise detalhada das condições calculadas
+5. **Participantes**: Adição de avalistas e grupos econômicos
+6. **Confirmação**: Revisão final e confirmação da operação
+
+## 🎯 Casos de Uso
+
+- **Gerentes de Conta**: Simulação rápida de condições para clientes
+- **Analistas de Crédito**: Avaliação de propostas e cenários
+- **Clientes**: Visualização transparente das condições oferecidas
+- **Back Office**: Processamento de operações pré-aprovadas
+
+## 🔧 Configurações Destacadas
 
 ### TurboPack
 
-TurboPack is enabled in all npm scripts:
+TurboPack está habilitado em todos os scripts npm:
 
-- `npm run dev` - Development with TurboPack
-- `npm run build` - Production build with TurboPack
+- `npm run dev` - Desenvolvimento com TurboPack
+- `npm run build` - Build de produção com TurboPack
 
 ### Prettier
 
-Configured with:
+Configurado com:
 
-- Tailwind CSS class sorting plugin
-- Consistent formatting rules
-- Auto-format on save (recommended in your editor)
+- Plugin de ordenação de classes do Tailwind CSS
+- Regras de formatação consistentes
+- Auto-formatação ao salvar (recomendado no editor)
 
-## 📚 Learn More
+## 📚 Documentação de Referência
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [PrimeReact Documentation](https://primereact.org/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [TurboPack Documentation](https://turbo.build/pack/docs)
+- [Documentação do Next.js](https://nextjs.org/docs)
+- [Documentação do PrimeReact](https://primereact.org/)
+- [Documentação do Tailwind CSS](https://tailwindcss.com/docs)
+- [Documentação do TurboPack](https://turbo.build/pack/docs)
 
 ## 🚀 Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new).
+A maneira mais fácil de fazer deploy da aplicação Next.js é usar a [Plataforma Vercel](https://vercel.com/new).
 
-Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Confira a [documentação de deploy do Next.js](https://nextjs.org/docs/app/building-your-application/deploying) para mais detalhes.
+
+## 🤝 Contribuição
+
+Este é um projeto protótipo. Para contribuições:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto é um protótipo desenvolvido para fins de demonstração e aprendizado.
+
+---
+
+**Desenvolvido com ❤️ para o setor agrícola brasileiro**

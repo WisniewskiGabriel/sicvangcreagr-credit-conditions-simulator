@@ -161,7 +161,7 @@ export const CreditOperationAction = ({
                   outlined
                   className="flex-1"
                   onClick={handleCopyTemplate}
-                  tooltip="Copia um resumo para enviar ao cliente"
+                  tooltip="Copia um resumo para enviar ao associado"
                 />
                 <Button
                   label="Iniciar Operação"
