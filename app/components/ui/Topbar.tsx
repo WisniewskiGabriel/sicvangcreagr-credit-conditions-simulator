@@ -127,9 +127,6 @@ export const Topbar = ({ onToggleSidebar }: TopbarProps) => {
             
             <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
               <div className="flex items-center">
-                <div className="bg-blue-500 w-8 h-8 rounded-lg flex items-center justify-center mr-3">
-                  <i className="pi pi-chart-line text-white text-sm"></i>
-                </div>
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                   SICVANGCREAGR
                 </h1>
@@ -159,20 +156,31 @@ export const Topbar = ({ onToggleSidebar }: TopbarProps) => {
                     popup
                     className="mt-2"
                   />
-                  <Button
-                    className="p-0 bg-transparent border-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-                    onClick={(e) => {
+                  {/* <Button
+                    className="p-0 bg-transparent border-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200 flex items-center justify-center"
+                    
+                  > */}
+                    <div
+                      className="relative bg-gray-100 dark:bg-gray-700 flex items-center hover:bg-gray-200 dark:hover:bg-gray-600 justify-center w-12 h-12 rounded-full hover:shadow-md transition-all duration-200"
+                      onClick={(e) => {
                       setMenuVisible(!menuVisible);
                       menu.current?.toggle(e);
                     }}
-                    aria-label="User menu"
-                  >
-                    <Avatar 
-                      label={getInitials(user.email)}
-                      shape="circle"
-                      className="bg-blue-500 text-white w-10 h-10 text-sm font-medium"
-                    />
-                  </Button>
+                    aria-label="User menu">
+                      <Avatar 
+                        label={getInitials(user.email)}
+                        shape="circle"
+                        className="bg-blue-500 text-white w-10 h-10 text-sm font-medium shadow-lg"
+                      />
+                      <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-0.5 shadow-sm border border-gray-200 dark:border-gray-600">
+                        <i 
+                          className={`pi pi-chevron-down text-xs text-gray-600 dark:text-gray-400 transition-transform duration-200 ${
+                            menuVisible ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  {/* </Button> */}
                 </div>
               </div>
             ) : (

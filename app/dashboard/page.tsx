@@ -106,11 +106,11 @@ const DashboardPage = () => {
                 Gerencie suas operações de crédito agrícola de forma eficiente
               </p>
             </div>
-            <div className="hidden md:block">
-              <div className="bg-white/20 p-4 rounded-lg text-center">
-                <i className="pi pi-sun text-4xl mb-2 block"></i>
+            <div className="hidden md:block ">
+                <div className="flex flex-wrap gap-2 align-items-center justify-content-start bg-white/20 p-4 rounded-lg text-center">
+                <i className="pi pi-sun text-4xl"></i>
                 <span className="text-sm">Bom trabalho!</span>
-              </div>
+                </div>
             </div>
           </div>
         </div>
