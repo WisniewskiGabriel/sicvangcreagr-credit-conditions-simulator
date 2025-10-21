@@ -83,7 +83,7 @@ export class MockAuthService {
         refresh_token: generateMockToken(user.id, 'refresh'),
         expires_in: 3600
       };
-    } catch (error) {
+    } catch {
       throw new Error("Invalid refresh token");
     }
   }
@@ -105,7 +105,7 @@ export class MockAuthService {
         id: user.id,
         email: user.email
       };
-    } catch (error) {
+    } catch {
       throw new Error("Invalid access token");
     }
   }

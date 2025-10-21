@@ -62,7 +62,7 @@ export interface LoginRequest {
 export interface SignupRequest {
   email: string;
   password: string;
-  user_metadata?: any;
+  user_metadata?: Record<string, unknown>;
 }
 
 export interface RefreshTokenRequest {

@@ -5,7 +5,7 @@ import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
 import { Badge } from "primereact/badge";
-import { AppLayout, PageHeader } from "../components";
+import { AppLayout } from "../components";
 import { useAuth } from "../context/AuthContext";
 import withAuth from "../hoc/withAuth";
 import Link from "next/link";
@@ -24,8 +24,8 @@ const DashboardPage = () => {
       label: "Nova Simulação",
       icon: "pi pi-calculator",
       color: "bg-blue-500",
-      href: "/",
-      description: "Criar nova simulação de crédito"
+      href: "/agricultural-credit",
+      description: "Criar nova simulação de crédito agrícola"
     },
     {
       label: "Perfil",

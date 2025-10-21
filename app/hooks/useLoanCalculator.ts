@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Client, CreditParticipant } from "../types";
 import { DEFAULT_LOAN_AMOUNT, DEFAULT_INTEREST_RATE, DEFAULT_INSTALLMENTS } from "../constants";
 
 export const useLoanCalculator = () => {

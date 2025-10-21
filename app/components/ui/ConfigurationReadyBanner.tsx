@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "primereact/button";
-
 interface ConfigurationReadyBannerProps {
   selectedCreditType: string;
   selectedVariant: string;

@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import Cookies from "js-cookie";
-import { User, AuthContextType, AuthResponse, LoginRequest, SignupRequest, RefreshTokenRequest } from "../types";
+import { User, AuthContextType, AuthResponse, LoginRequest, RefreshTokenRequest } from "../types";
 import { MockAuthService } from "../services/mockAuthService";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   // API request wrapper with automatic token refresh
-  const apiRequest = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const apiRequest = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
     const token = Cookies.get("access_token");
     
     const headers: Record<string, string> = {
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     return response;
-  };
+  }, []);
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -236,7 +236,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   // Get current user
-  const getUser = async (): Promise<User | null> => {
+  const getUser = useCallback(async (): Promise<User | null> => {
     try {
       const token = Cookies.get("access_token");
       if (!token) {
@@ -268,7 +268,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(null);
       return null;
     }
-  };
+  }, [apiRequest]);
 
   // Initialize authentication state
   useEffect(() => {
@@ -291,7 +291,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [getUser]);
 
   // Auto-refresh token before expiration
   useEffect(() => {

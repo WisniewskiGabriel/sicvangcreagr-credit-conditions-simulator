@@ -55,7 +55,7 @@ const ProfilePage = () => {
         newPassword: "",
         confirmPassword: ""
       }));
-    } catch (err) {
+    } catch {
       setError("Erro ao atualizar perfil. Tente novamente.");
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ const ProfilePage = () => {
         newPassword: "",
         confirmPassword: ""
       }));
-    } catch (err) {
+    } catch {
       setError("Erro ao alterar senha. Tente novamente.");
     } finally {
       setLoading(false);

@@ -38,7 +38,7 @@ export const Topbar = ({ onToggleSidebar }: TopbarProps) => {
             life: 3000
           });
           router.push('/login');
-        } catch (error) {
+        } catch {
           toast.current?.show({
             severity: 'error',
             summary: 'Erro no logout',
@@ -74,7 +74,7 @@ export const Topbar = ({ onToggleSidebar }: TopbarProps) => {
       label: 'Nova Simulação',
       icon: 'pi pi-calculator',
       command: () => {
-        router.push('/');
+        router.push('/agricultural-credit');
         setMenuVisible(false);
       }
     },

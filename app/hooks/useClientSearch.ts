@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Client, CreditParticipant } from "../types";
+import { Client } from "../types";
 import { searchClients } from "../utils";
 
 export const useClientSearch = (allClients: Client[]) => {

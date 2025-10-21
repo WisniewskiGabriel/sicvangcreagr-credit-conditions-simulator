@@ -61,7 +61,7 @@ const LoginPage = () => {
       } else {
         setError("Email ou senha incorretos. Tente novamente.");
       }
-    } catch (err) {
+    } catch {
       setError("Erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
       setLoading(false);
@@ -72,9 +72,25 @@ const LoginPage = () => {
     setEmail("demo@sicvangcreagr.com");
     setPassword("demo123");
     
-    // Small delay to show the form filled
+    // Small delay to show the form filled, then perform login
     setTimeout(async () => {
-      await handleSubmit(new Event("submit") as any);
+      setLoading(true);
+      setError("");
+
+      try {
+        const success = await login("demo@sicvangcreagr.com", "demo123");
+        
+        if (success) {
+          const callbackUrl = searchParams.get("callbackUrl");
+          router.push(callbackUrl ? decodeURIComponent(callbackUrl) : "/dashboard");
+        } else {
+          setError("Email ou senha incorretos. Tente novamente.");
+        }
+      } catch {
+        setError("Erro de conexão. Verifique sua internet e tente novamente.");
+      } finally {
+        setLoading(false);
+      }
     }, 500);
   };
 
@@ -202,7 +218,7 @@ const LoginPage = () => {
                       <p><strong>Email:</strong> demo@sicvangcreagr.com</p>
                       <p><strong>Senha:</strong> demo123</p>
                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                        Use o botão "Login Demo" para preencher automaticamente.
+                        Use o botão &ldquo;Login Demo&rdquo; para preencher automaticamente.
                       </p>
                     </div>
                   </>
