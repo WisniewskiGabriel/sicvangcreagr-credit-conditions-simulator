@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { 
+  AppLayout,
   PageHeader,
   ConfigurationReadyBanner,
   ProponentesSummaryBanner,
@@ -153,8 +154,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-      <main className="mx-auto max-w-6xl space-y-6 py-8">
+    <AppLayout>
+      <div className="mx-auto max-w-6xl space-y-6 py-8">
         <PageHeader
           title="Simulador de crédito agrícola"
           subtitle="Condições e taxas para linhas de crédito agrícola"
@@ -247,7 +248,7 @@ export default function Home() {
           onUpdateParticipantRole={updateParticipantRole}
           onFinalize={finalizeCreditOperation}
         />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

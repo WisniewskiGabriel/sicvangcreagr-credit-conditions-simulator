@@ -218,7 +218,3 @@ Este é um projeto protótipo. Para contribuições:
 ## 📄 Licença
 
 Este projeto é um protótipo desenvolvido para fins de demonstração e aprendizado.
-
----
-
-**Desenvolvido com ❤️ para o setor agrícola brasileiro**
