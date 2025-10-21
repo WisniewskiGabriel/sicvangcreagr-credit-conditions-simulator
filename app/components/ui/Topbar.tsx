@@ -156,17 +156,16 @@ export const Topbar = ({ onToggleSidebar }: TopbarProps) => {
                     popup
                     className="mt-2"
                   />
-                  {/* <Button
+                  <Button
                     className="p-0 bg-transparent border-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200 flex items-center justify-center"
-                    
-                  > */}
-                    <div
-                      className="relative bg-gray-100 dark:bg-gray-700 flex items-center hover:bg-gray-200 dark:hover:bg-gray-600 justify-center w-12 h-12 rounded-full hover:shadow-md transition-all duration-200"
-                      onClick={(e) => {
+                    onClick={(e) => {
                       setMenuVisible(!menuVisible);
                       menu.current?.toggle(e);
                     }}
-                    aria-label="User menu">
+                    aria-label="User menu"
+                    unstyled
+                  >
+                    <div className="relative flex items-center justify-center w-12 h-12 rounded-full hover:shadow-md transition-all duration-200">
                       <Avatar 
                         label={getInitials(user.email)}
                         shape="circle"
@@ -180,7 +179,7 @@ export const Topbar = ({ onToggleSidebar }: TopbarProps) => {
                         />
                       </div>
                     </div>
-                  {/* </Button> */}
+                  </Button>
                 </div>
               </div>
             ) : (
